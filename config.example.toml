@@ -1,0 +1,5 @@
+[datasource]
+url = "jdbc:mysql://host:port/database"
+username = "xxx"
+password = "xxx"
+driver = "com.mysql.cj.jdbc.Driver"
