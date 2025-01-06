@@ -2,7 +2,7 @@ FROM openjdk:21
 
 WORKDIR /app
 
-COPY mirrorc-cdk-backend.jar mirrorc-cdk-backend.jar
+COPY target/mirrorc-cdk-backend.jar mirrorc-cdk-backend.jar
 
 EXPOSE 9768
 
