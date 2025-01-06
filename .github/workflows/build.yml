@@ -41,5 +41,5 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: "ghcr.io/mirrorchyan/resource-backend:latest"
+          tags: "ghcr.io/mirrorchyan/cdk-backend:latest"
           labels: ${{ steps.meta.outputs.labels }}
