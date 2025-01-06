@@ -65,6 +65,7 @@ private fun dispatch(router: Router) {
     router.post("/acquire").handler { ctx ->
         requireJsonParams(ctx)?.let {
             val p = JSON.parseObject(it, PlanParams::class.java)
+            ctx.response().putHeader("Content-Type", "application/json")
             Promise.promise<String>().execute(ctx) {
                 acquire(p).toJson()
             }
@@ -73,6 +74,7 @@ private fun dispatch(router: Router) {
     router.post("/validate").handler { ctx ->
         requireJsonParams(ctx)?.let {
             val p = JSON.parseObject(it, ValidateParams::class.java)
+            ctx.response().putHeader("Content-Type", "application/json")
             Promise.promise<String>().execute(ctx) {
                 validate(p).toJson()
             }
