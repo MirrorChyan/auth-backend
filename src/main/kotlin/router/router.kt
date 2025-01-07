@@ -1,7 +1,8 @@
 package router
 
-import biz.acquire
-import biz.validate
+import biz.acquireCDK
+import biz.validateCDK
+import biz.validateToken
 import com.alibaba.fastjson2.JSON
 import exception.ServiceException
 import io.vertx.core.Promise
@@ -67,7 +68,7 @@ private fun dispatch(router: Router) {
             val p = JSON.parseObject(it, PlanParams::class.java)
             ctx.response().putHeader("Content-Type", "application/json")
             Promise.promise<String>().execute(ctx) {
-                acquire(p).toJson()
+                acquireCDK(p).toJson()
             }
         }
     }
@@ -76,8 +77,18 @@ private fun dispatch(router: Router) {
             val p = JSON.parseObject(it, ValidateParams::class.java)
             ctx.response().putHeader("Content-Type", "application/json")
             Promise.promise<String>().execute(ctx) {
-                validate(p).toJson()
+                validateCDK(p).toJson()
             }
         }
     }
+
+    router.post("/develop/validate").handler { ctx ->
+        val token: String? = ctx.request().getParam("token")
+        ctx.response().putHeader("Content-Type", "application/json")
+        Promise.promise<String>().execute(ctx) {
+            validateToken(token).toJson()
+        }
+    }
+
+
 }

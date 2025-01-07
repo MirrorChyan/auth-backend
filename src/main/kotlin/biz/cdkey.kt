@@ -1,5 +1,6 @@
 package biz
 
+
 import datasource.DB
 import exception.ServiceException
 import model.PlanParams
@@ -45,7 +46,7 @@ fun next(): String {
 }
 
 
-fun acquire(params: PlanParams): Resp {
+fun acquireCDK(params: PlanParams): Resp {
     with(params) {
         (params.expireTime == null || params.expireTime!!.isBefore(LocalDateTime.now())).throwIf("过期时间设置有误")
     }
@@ -64,7 +65,7 @@ fun acquire(params: PlanParams): Resp {
 }
 
 
-fun validate(params: ValidateParams): Resp {
+fun validateCDK(params: ValidateParams): Resp {
     with(params) {
         specificationId.isNullOrBlank().throwIf("specificationId不能为空")
         cdk.isNullOrBlank().throwIf("CDK不能为空")
@@ -105,8 +106,5 @@ fun validate(params: ValidateParams): Resp {
         set(OperationLog.type, "validate")
     }
 
-
-    // TODO 重定向下载地址
-
-    return Resp.success(1)
+    return Resp.success()
 }

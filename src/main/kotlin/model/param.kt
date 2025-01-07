@@ -42,3 +42,18 @@ class ValidateParams {
      *  */
     var source: String? = null
 }
+
+
+class CreateApplicationParams {
+    /**
+     * 应用名称
+     * */
+    var applicationName: String? = null
+}
+
+class CreateTokenParams {
+    /**
+     * 应用ID
+     * */
+    var applicationId: Int? = null
+}

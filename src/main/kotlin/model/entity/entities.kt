@@ -22,3 +22,17 @@ object OperationLog : Table<Nothing>("mwf_operation_log") {
     val type = varchar("type")
     val createdAt = datetime("created_at")
 }
+
+object Application : Table<Nothing>("mirrorc_application") {
+    val id = int("id").primaryKey()
+    val applicationName = varchar("application_name")
+    val createdAt = datetime("created_at")
+}
+
+object ApplicationToken : Table<Nothing>("mirrorc_application_token") {
+    val id = int("id").primaryKey()
+    val applicationId = int("application_id")
+    val applicationToken = varchar("application_token")
+    val status = int("status")
+    val createdAt = datetime("created_at")
+}
