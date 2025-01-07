@@ -39,12 +39,13 @@ private fun errHandler(ctx: RoutingContext) {
     val ex = ctx.failure()
     val resp = ctx.response()
     resp.putHeader("Content-Type", "application/json")
-    resp.setStatusCode(500)
     if (ex is ServiceException) {
+        ctx.response().setStatusCode(ex.code)
         ctx.end(Resp.fail(ex.message).toJson())
         log.error("ServiceException {}", ex.message)
         return
     }
+    resp.setStatusCode(500)
     log.error("unexpected error ", ex)
     ctx.end(UEE)
 }

@@ -16,7 +16,7 @@ import java.util.*
  * @return [Resp]
  */
 fun validateToken(token: String?): Resp {
-    val tk = token.throwIfNullOrEmpty("Token不能为空")
+    val tk = token.throwIfNullOrEmpty("Token不能为空", 400)
     val qr = DB.from(ApplicationToken)
         .select(ApplicationToken.status, ApplicationToken.id)
         .where {

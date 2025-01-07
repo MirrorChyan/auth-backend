@@ -10,9 +10,9 @@ fun Boolean.throwIf(msg: String) {
     }
 }
 
-fun <T> T?.throwIfNullOrEmpty(msg: String): T {
+fun <T> T?.throwIfNullOrEmpty(msg: String, code: Int = 200): T {
     if (this == null || (this is String && this.isEmpty())) {
-        throw ServiceException(msg)
+        throw ServiceException(msg, code)
     }
     return this
 }

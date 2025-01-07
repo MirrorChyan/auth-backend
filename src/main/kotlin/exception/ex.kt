@@ -1,8 +1,6 @@
 package exception
 
-class ServiceException : RuntimeException {
-    constructor(message: String?) : super(message)
-    constructor() : super()
+class ServiceException(message: String?, val code: Int = 200) : RuntimeException(message) {
 
     override fun fillInStackTrace() = this
 }
