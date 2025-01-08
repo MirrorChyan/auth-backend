@@ -1,9 +1,9 @@
-FROM openjdk:21
+FROM amd64/eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-COPY target/mirrorc-cdk-backend.jar mirrorc-cdk-backend.jar
+COPY target/mirrorc-cdk-backend.jar .
 
 EXPOSE 9768
 
-ENTRYPOINT ["java", "-jar", "-XX:+UseZGC", "mirrorc-cdk-backend.jar"]
+ENTRYPOINT ["java", "-jar", "-XX:+UseZGC", "-XX:+ZGenerational", "mirrorc-cdk-backend.jar"]
