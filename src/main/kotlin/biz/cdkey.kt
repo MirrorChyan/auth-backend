@@ -1,6 +1,7 @@
 package biz
 
 
+import config.RDS
 import datasource.DB
 import exception.ServiceException
 import model.PlanParams
@@ -12,7 +13,9 @@ import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
 import java.nio.ByteBuffer
+import java.time.Duration
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
@@ -98,6 +101,8 @@ fun validateCDK(params: ValidateParams): Resp {
         (eId != specId).throwIf("CDK已被使用")
     }
 
+    limit(cdk)
+
     // log
     DB.insert(OperationLog) {
         set(OperationLog.cdk, cdk)
@@ -107,4 +112,17 @@ fun validateCDK(params: ValidateParams): Resp {
     }
 
     return Resp.success()
+}
+
+private fun limit(cdk: String) {
+    val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
+    val key = "limit:${date}:${cdk}"
+    val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
+    (cnt > 7).throwIf("您的账号已被限制")
+
+    RDS.get().incr(key).get()
+
+    if (cnt == 0) {
+        RDS.get().expire(key, Duration.ofDays(1))
+    }
 }

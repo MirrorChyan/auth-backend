@@ -47,4 +47,10 @@ object Props {
 
         fun get(key: String): String = TomlStore.config.value.getString("datasource.$key")
     }
+
+    object Redis {
+        val url: String by lazy {
+            TomlStore.config.value.getString("redis.url")
+        }
+    }
 }
