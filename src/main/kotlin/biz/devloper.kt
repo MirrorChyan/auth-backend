@@ -16,7 +16,7 @@ import java.util.*
  * @return [Resp]
  */
 fun validateToken(token: String?): Resp {
-    val tk = token.throwIfNullOrEmpty("Token不能为空", 400)
+    val tk = token.throwIfNullOrEmpty("The Token cannot be empty", 400)
     val qr = DB.from(ApplicationToken)
         .select(ApplicationToken.status, ApplicationToken.id)
         .where {
@@ -24,10 +24,10 @@ fun validateToken(token: String?): Resp {
         }
         .limit(1)
         .iterator()
-    qr.hasNext().throwIfNot("Token无效")
+    qr.hasNext().throwIfNot("Invalid Token")
 
     qr.next().apply {
-        (get(ApplicationToken.status) != 1).throwIf("Token状态不正确")
+        (get(ApplicationToken.status) != 1).throwIf("The Token status is incorrect")
     }
 
     return Resp.success()
@@ -39,7 +39,7 @@ fun validateToken(token: String?): Resp {
  * @return [Resp]
  */
 fun createApplication(applicationName: String?): Resp {
-    applicationName.throwIfNullOrEmpty("应用名不能为空")
+    applicationName.throwIfNullOrEmpty("The application name cannot be empty")
 
     DB.insertAndGenerateKey(Application) {
         set(Application.applicationName, applicationName)
@@ -53,7 +53,7 @@ fun createApplication(applicationName: String?): Resp {
  * @return [Resp]
  */
 fun createApplicationToken(applicationId: Int?): Resp {
-    applicationId.throwIfNullOrEmpty("应用Id不能为空")
+    applicationId.throwIfNullOrEmpty("The application Id cannot be empty")
 
     val uuid = UUID.randomUUID().toString()
     DB.insert(ApplicationToken) {

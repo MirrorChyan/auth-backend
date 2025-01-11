@@ -51,7 +51,7 @@ fun next(): String {
 
 fun acquireCDK(params: PlanParams): Resp {
     with(params) {
-        (params.expireTime == null || params.expireTime!!.isBefore(LocalDateTime.now())).throwIf("过期时间设置有误")
+        (params.expireTime == null || params.expireTime!!.isBefore(LocalDateTime.now())).throwIf("The expiration time is incorrectly set")
     }
 
     val eTime = params.expireTime!!
@@ -70,8 +70,8 @@ fun acquireCDK(params: PlanParams): Resp {
 
 fun validateCDK(params: ValidateParams): Resp {
     with(params) {
-        specificationId.isNullOrBlank().throwIf("specificationId不能为空")
-        cdk.isNullOrBlank().throwIf("CDK不能为空")
+        specificationId.isNullOrBlank().throwIf("specificationId cannot be empty")
+        cdk.isNullOrBlank().throwIf("cdk cannot be empty")
     }
     val cdk = params.cdk!!
     val specId = params.specificationId!!
@@ -87,7 +87,7 @@ fun validateCDK(params: ValidateParams): Resp {
     val next = qr.next();
     val expireTime = next[CDK.expireTime]!!
 
-    expireTime.isBefore(LocalDateTime.now()).throwIf("CDK已过期")
+    expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
     val eId = next[CDK.specificationId]
     if (eId == null) {
@@ -96,9 +96,9 @@ fun validateCDK(params: ValidateParams): Resp {
                 CDK.key eq cdk
             }
             set(CDK.specificationId, specId)
-        } > 0).throwIfNot("CDK绑定更新失败")
+        } > 0).throwIfNot("cdk binding update failed ")
     } else {
-        (eId != specId).throwIf("CDK已被使用")
+        (eId != specId).throwIf("cdk has been used ")
     }
 
     limit(cdk)
@@ -118,7 +118,7 @@ private fun limit(cdk: String) {
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
     val key = "limit:${date}:${cdk}"
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
-    (cnt > 7).throwIf("您的账号已被限制")
+    (cnt > 7).throwIf("your account has been restricted for today")
 
     RDS.get().incr(key).get()
 

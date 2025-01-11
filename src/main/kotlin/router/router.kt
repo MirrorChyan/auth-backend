@@ -54,7 +54,7 @@ private fun requireJsonParams(ctx: RoutingContext): String? {
     val body = ctx.body().asString()
     if (body == null || ctx.request().headers().get("content-type") != "application/json") {
         ctx.response().setStatusCode(400)
-        ctx.end(Resp.fail("参数不合法").toJson())
+        ctx.end(Resp.fail("parameter invalid").toJson())
     }
     return body
 
