@@ -1,6 +1,7 @@
 package biz
 
 
+import config.Props
 import config.RDS
 import datasource.DB
 import exception.ServiceException
@@ -115,10 +116,13 @@ fun validateCDK(params: ValidateParams): Resp {
 }
 
 private fun limit(cdk: String) {
+    if (!Boolean.equals(Props.Extra.limitEnabled)) {
+        return
+    }
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
     val key = "limit:${date}:${cdk}"
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
-    (cnt > 7).throwIf("your account has been restricted for today")
+    (cnt > Props.Extra.limitCount).throwIf("your account has been restricted for today")
 
     RDS.get().incr(key).get()
 

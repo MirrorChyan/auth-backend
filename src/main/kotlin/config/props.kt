@@ -53,4 +53,13 @@ object Props {
             TomlStore.config.value.getString("redis.url")
         }
     }
+
+    object Extra {
+        val limitEnabled: Boolean by lazy {
+            TomlStore.config.value.getBoolean("extra.limit.enabled") ?: true
+        }
+        val limitCount: Long by lazy {
+            TomlStore.config.value.getLong("extra.limit.count") ?: 7
+        }
+    }
 }
