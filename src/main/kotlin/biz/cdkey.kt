@@ -91,16 +91,15 @@ fun validateCDK(params: ValidateParams): Resp {
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
     val eId = next[CDK.specificationId]
-    if (eId == null) {
-        (DB.update(CDK) {
-            where {
-                CDK.key eq cdk
-            }
-            set(CDK.specificationId, specId)
-        } > 0).throwIfNot("cdk binding update failed ")
-    } else {
-        (eId != specId).throwIf("cdk has been used ")
-    }
+    val isFirstBinding = eId == null
+    (!isFirstBinding && eId != specId).throwIf("cdk has been used ")
+
+    (DB.update(CDK) {
+        where {
+            CDK.key eq cdk
+        }
+        set(CDK.specificationId, specId)
+    } > 0).throwIfNot("cdk binding update failed ")
 
     limit(cdk)
 
@@ -112,7 +111,7 @@ fun validateCDK(params: ValidateParams): Resp {
         set(OperationLog.type, "validate")
     }
 
-    return Resp.success()
+    return Resp.success(isFirstBinding)
 }
 
 private fun limit(cdk: String) {
