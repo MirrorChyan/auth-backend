@@ -17,8 +17,9 @@ object CDK : Table<Nothing>("mirrorc_cdk") {
 object OperationLog : Table<Nothing>("mirrorc_operation_log") {
     val id = int("id").primaryKey()
     val cdk = varchar("cdk")
-    val source = varchar("source")
     val specificationId = varchar("specification_id")
+    val ua = varchar("ua")
+    val source = varchar("source")
     val type = varchar("type")
     val createdAt = datetime("created_at")
 }

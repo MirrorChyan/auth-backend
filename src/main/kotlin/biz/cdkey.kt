@@ -107,6 +107,7 @@ fun validateCDK(params: ValidateParams): Resp {
     DB.insert(OperationLog) {
         set(OperationLog.cdk, cdk)
         set(OperationLog.source, params.source)
+        set(OperationLog.ua, params.ua)
         set(OperationLog.specificationId, specId)
         set(OperationLog.type, "validate")
     }

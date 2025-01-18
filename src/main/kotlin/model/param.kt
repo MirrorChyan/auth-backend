@@ -41,6 +41,11 @@ class ValidateParams {
      * 来源
      *  */
     var source: String? = null
+
+    /**
+     * user-agent
+     *  */
+    var ua: String? = null
 }
 
 
