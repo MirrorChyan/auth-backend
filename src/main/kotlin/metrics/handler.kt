@@ -12,6 +12,7 @@ var registry = PrometheusMeterRegistry(PrometheusConfig.DEFAULT)
 
 
 fun initMetrics() {
+    registry.config().commonTags("application", "mirrorc-cdk-backend")
     JvmThreadMetrics().bindTo(registry)
     JvmGcMetrics().bindTo(registry)
     JvmMemoryMetrics().bindTo(registry)
