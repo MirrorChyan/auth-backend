@@ -18,6 +18,11 @@ class PlanParams {
      * 过期时间
      *  */
     var expireTime: LocalDateTime? = null
+
+    /**
+     * 购买数量
+     * */
+    var quantity: Int = 1
 }
 
 

@@ -3,6 +3,7 @@ package datasource
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import config.Props
+import metrics.initMetrics
 import org.ktorm.database.Database
 
 
@@ -17,4 +18,6 @@ fun config() {
     }).run {
         Database.connect(this)
     }
+
+    initMetrics()
 }

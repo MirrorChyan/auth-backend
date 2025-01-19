@@ -14,6 +14,7 @@ import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -21,7 +22,7 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 
-const val ST: Int = 0x1bf52
+const val ST: Int = 0xBADF00D
 
 private val NEXT_INC = AtomicInteger(ThreadLocalRandom.current().nextInt())
 
@@ -69,13 +70,16 @@ fun acquireCDK(params: PlanParams): Resp {
 }
 
 
+@OptIn(ExperimentalStdlibApi::class)
 fun validateCDK(params: ValidateParams): Resp {
     with(params) {
         specificationId.isNullOrBlank().throwIf("specificationId cannot be empty")
         cdk.isNullOrBlank().throwIf("cdk cannot be empty")
     }
     val cdk = params.cdk!!
-    val specId = params.specificationId!!
+
+
+    val tmp = params.specificationId!!
     val qr = DB.from(CDK)
         .select(CDK.expireTime, CDK.specificationId)
         .where {
@@ -92,6 +96,9 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val eId = next[CDK.specificationId]
     val isFirstBinding = eId == null
+
+    val specId = MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()
+
     (!isFirstBinding && eId != specId).throwIf("cdk has been used ")
 
     (DB.update(CDK) {
@@ -124,7 +131,7 @@ private fun limit(cdk: String) {
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
     (cnt > Props.Extra.limitCount).throwIf("your account has been restricted for today")
 
-    RDS.get().incr(key).get()
+    RDS.get().incr(key)
 
     if (cnt == 0) {
         RDS.get().expire(key, Duration.ofDays(1))
