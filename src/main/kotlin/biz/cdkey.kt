@@ -14,6 +14,7 @@ import model.entity.OperationLog
 import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
+import utils.throwIfNullOrEmpty
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 import java.time.Duration
@@ -54,27 +55,18 @@ fun next(): String {
 fun renewCDK(params: RenewParams): Resp {
     with(params) {
         cdk.isNullOrBlank().throwIf("cdk cannot be empty")
+        expireTime.throwIfNullOrEmpty("expireTime cannot be empty")
     }
     val cdk = params.cdk!!
-    if (params.duration <= 0) {
-        throw ServiceException("renew duration must be greater than 0")
-    }
-    val sql = """
-        update mirrorc_cdk
-        set expire_time = DATE_ADD(
-                IF(expire_time < CURRENT_TIMESTAMP,
-                   CURRENT_TIMESTAMP,
-                   expire_time
-                ),
-                interval ? second)
-        where `key` = ?;
-    """.trimIndent()
-    val row = DB.useConnection { c ->
-        c.prepareStatement(sql).use {
-            it.setLong(1, params.duration)
-            it.setString(2, cdk)
-            it.executeUpdate()
+    val expireTime = params.expireTime!!
+
+    expireTime.isBefore(LocalDateTime.now()).throwIf("expireTime cannot be set to past")
+
+    val row = DB.update(CDK) {
+        where {
+            CDK.key eq cdk
         }
+        set(CDK.expireTime, expireTime)
     }
     (row > 0).throwIfNot("cdk renew failed")
 

@@ -32,9 +32,9 @@ class RenewParams {
     var cdk: String? = null
 
     /**
-     * 续期时间 单位秒
+     * 续期后的过期时间
      *  */
-    var duration: Long = 0
+    var expireTime: LocalDateTime? = null
 }
 
 /**
