@@ -1,6 +1,7 @@
 package router
 
 import biz.acquireCDK
+import biz.renewCDK
 import biz.validateCDK
 import biz.validateToken
 import com.alibaba.fastjson2.JSON
@@ -14,6 +15,7 @@ import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 import metrics.registry
 import model.PlanParams
+import model.RenewParams
 import model.Resp
 import model.ValidateParams
 import org.slf4j.LoggerFactory
@@ -73,6 +75,16 @@ private fun dispatch(router: Router) {
                 acquireCDK(p).toJson()
             }
         }
+    }
+    router.post("/renew").handler { ctx ->
+        requireJsonParams(ctx)?.let {
+            val p = JSON.parseObject(it, RenewParams::class.java)
+            ctx.response().putHeader("Content-Type", "application/json")
+            Promise.promise<String>().execute(ctx) {
+                renewCDK(p).toJson()
+            }
+        }
+
     }
     router.post("/validate").handler { ctx ->
         requireJsonParams(ctx)?.let {

@@ -6,6 +6,7 @@ import config.RDS
 import datasource.DB
 import exception.ServiceException
 import model.PlanParams
+import model.RenewParams
 import model.Resp
 import model.ValidateParams
 import model.entity.CDK
@@ -50,6 +51,35 @@ fun next(): String {
     return sb.toString()
 }
 
+fun renewCDK(params: RenewParams): Resp {
+    with(params) {
+        cdk.isNullOrBlank().throwIf("cdk cannot be empty")
+    }
+    val cdk = params.cdk!!
+    if (params.duration <= 0) {
+        throw ServiceException("renew duration must be greater than 0")
+    }
+    val sql = """
+        update mirrorc_cdk
+        set expire_time = DATE_ADD(
+                IF(expire_time < CURRENT_TIMESTAMP,
+                   CURRENT_TIMESTAMP,
+                   expire_time
+                ),
+                interval ? second)
+        where `key` = ?;
+    """.trimIndent()
+    val row = DB.useConnection { c ->
+        c.prepareStatement(sql).use {
+            it.setLong(1, params.duration)
+            it.setString(2, cdk)
+            it.executeUpdate()
+        }
+    }
+    (row > 0).throwIfNot("cdk renew failed")
+
+    return Resp.success()
+}
 
 fun acquireCDK(params: PlanParams): Resp {
     with(params) {

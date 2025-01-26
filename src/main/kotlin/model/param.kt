@@ -25,6 +25,17 @@ class PlanParams {
     var quantity: Int = 1
 }
 
+class RenewParams {
+    /**
+     * CDK
+     * */
+    var cdk: String? = null
+
+    /**
+     * 续期时间 单位秒
+     *  */
+    var duration: Long = 0
+}
 
 /**
  * @author Alioth
