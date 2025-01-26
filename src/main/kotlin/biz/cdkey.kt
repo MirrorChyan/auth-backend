@@ -69,19 +69,17 @@ fun acquireCDK(params: PlanParams): Resp {
 
 }
 
-
 @OptIn(ExperimentalStdlibApi::class)
 fun validateCDK(params: ValidateParams): Resp {
     with(params) {
-        specificationId.isNullOrBlank().throwIf("specificationId cannot be empty")
         cdk.isNullOrBlank().throwIf("cdk cannot be empty")
     }
     val cdk = params.cdk!!
+    val tmp = params.specificationId
 
 
-    val tmp = params.specificationId!!
     val qr = DB.from(CDK)
-        .select(CDK.expireTime, CDK.specificationId)
+        .select(CDK.expireTime, CDK.specificationId, CDK.status)
         .where {
             CDK.key eq cdk
         }
@@ -89,33 +87,50 @@ fun validateCDK(params: ValidateParams): Resp {
     if (!qr.hasNext()) {
         throw ServiceException("invalid cdk")
     }
-    val next = qr.next();
+
+    val next = qr.next()
+
     val expireTime = next[CDK.expireTime]!!
+    val status = next[CDK.status]!!
+
 
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
-    val eId = next[CDK.specificationId]
-    val isFirstBinding = eId == null
-
-    val specId = MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()
-
-    (!isFirstBinding && eId != specId).throwIf("cdk has been used ")
-
-    (DB.update(CDK) {
-        where {
-            CDK.key eq cdk
-        }
-        set(CDK.specificationId, specId)
-    } > 0).throwIfNot("cdk binding update failed ")
-
     limit(cdk)
+
+
+    val isFirstBinding = status == 0
+
+    val oldSpecId = next[CDK.specificationId]
+    val specId = when {
+        tmp != null && oldSpecId == null -> {
+            MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()
+        }
+
+        else -> null
+    }
+    if (isFirstBinding || specId != null) {
+        val row = DB.update(CDK) {
+            where {
+                CDK.key eq cdk
+            }
+            if (isFirstBinding) {
+                set(CDK.status, 1)
+            }
+            if (specId != null) {
+                set(CDK.specificationId, specId)
+            }
+        }
+        (row > 0).throwIfNot("cdk binding update failed")
+    }
+
 
     // log
     DB.insert(OperationLog) {
         set(OperationLog.cdk, cdk)
         set(OperationLog.source, params.source)
         set(OperationLog.ua, params.ua)
-        set(OperationLog.specificationId, specId)
+        set(OperationLog.specificationId, specId ?: oldSpecId)
         set(OperationLog.type, "validate")
     }
 

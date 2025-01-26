@@ -9,6 +9,7 @@ object CDK : Table<Nothing>("mirrorc_cdk") {
     val key = varchar("key").primaryKey()
     val specificationId = varchar("specification_id")
     val type = varchar("type")
+    // 0 未使用 1 已使用
     val status = int("status")
     val expireTime = datetime("expire_time")
     val createdAt = datetime("created_at")
