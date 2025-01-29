@@ -1,16 +1,14 @@
 package biz
 
 
+import cache.BT
+import cache.C
 import config.Props
 import config.RDS
 import datasource.DB
 import exception.ServiceException
-import model.PlanParams
-import model.RenewParams
-import model.Resp
-import model.ValidateParams
+import model.*
 import model.entity.CDK
-import model.entity.OperationLog
 import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
@@ -100,20 +98,21 @@ fun validateCDK(params: ValidateParams): Resp {
     val tmp = params.specificationId
 
 
-    val qr = DB.from(CDK)
-        .select(CDK.expireTime, CDK.specificationId, CDK.status)
-        .where {
-            CDK.key eq cdk
+    val record = C.get(cdk) {
+        val qr = DB.from(CDK)
+            .select(CDK.expireTime, CDK.specificationId, CDK.status)
+            .where {
+                CDK.key eq cdk
+            }
+            .iterator()
+        if (!qr.hasNext()) {
+            throw ServiceException("invalid cdk")
         }
-        .iterator()
-    if (!qr.hasNext()) {
-        throw ServiceException("invalid cdk")
+        qr.next()
     }
 
-    val next = qr.next()
-
-    val expireTime = next[CDK.expireTime]!!
-    val status = next[CDK.status]!!
+    val expireTime = record[CDK.expireTime]!!
+    val status = record[CDK.status]!!
 
 
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
@@ -123,7 +122,7 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val isFirstBinding = status == 0
 
-    val oldSpecId = next[CDK.specificationId]
+    val oldSpecId = record[CDK.specificationId]
     val specId = when {
         tmp != null && oldSpecId == null -> {
             MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()
@@ -132,6 +131,8 @@ fun validateCDK(params: ValidateParams): Resp {
         else -> null
     }
     if (isFirstBinding || specId != null) {
+        C.invalidate(cdk)
+        // ignore extreme races for now
         val row = DB.update(CDK) {
             where {
                 CDK.key eq cdk
@@ -143,18 +144,22 @@ fun validateCDK(params: ValidateParams): Resp {
                 set(CDK.specificationId, specId)
             }
         }
+
         (row > 0).throwIfNot("cdk binding update failed")
     }
 
 
     // log
-    DB.insert(OperationLog) {
-        set(OperationLog.cdk, cdk)
-        set(OperationLog.source, params.source)
-        set(OperationLog.ua, params.ua)
-        set(OperationLog.specificationId, specId ?: oldSpecId)
-        set(OperationLog.type, "validate")
-    }
+    BT.enqueue(
+        LogRecord(
+            cdk = cdk,
+            source = params.source,
+            spId = specId ?: oldSpecId,
+            type = "validate",
+            ua = params.ua,
+            time = LocalDateTime.now()
+        )
+    )
 
     return Resp.success(isFirstBinding)
 }
