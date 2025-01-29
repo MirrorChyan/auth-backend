@@ -108,12 +108,19 @@ fun validateCDK(params: ValidateParams): Resp {
         if (!qr.hasNext()) {
             throw ServiceException("invalid cdk")
         }
-        qr.next()
+        qr.next().run {
+            ValidTuple(
+                this[CDK.key]!!,
+                this[CDK.status]!!,
+                this[CDK.expireTime]!!,
+                this[CDK.specificationId]
+            )
+        }
     }
 
-    val expireTime = record[CDK.expireTime]!!
-    val status = record[CDK.status]!!
-
+    val expireTime = record.expireTime
+    val status = record.status
+    val oldSpecId = record.spId
 
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
@@ -122,7 +129,7 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val isFirstBinding = status == 0
 
-    val oldSpecId = record[CDK.specificationId]
+
     val specId = when {
         tmp != null && oldSpecId == null -> {
             MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()

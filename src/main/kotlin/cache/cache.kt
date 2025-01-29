@@ -5,13 +5,14 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.phantomthief.collection.BufferTrigger
 import datasource.DB
 import model.LogRecord
+import model.ValidTuple
 import model.entity.OperationLog
 import org.ktorm.dsl.QueryRowSet
 import org.ktorm.dsl.batchInsert
 import java.util.concurrent.TimeUnit
 
 
-val C: Cache<String, QueryRowSet> = Caffeine.newBuilder()
+val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
     .maximumSize(100)
     .expireAfterWrite(10, TimeUnit.MINUTES)
     .softValues()
