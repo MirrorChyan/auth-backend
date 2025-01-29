@@ -13,7 +13,6 @@ data class LogRecord(
 )
 
 class ValidTuple(
-    val cdk: String,
     val status: Int,
     val expireTime: LocalDateTime,
     val spId: String?,

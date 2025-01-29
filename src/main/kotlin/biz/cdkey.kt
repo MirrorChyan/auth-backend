@@ -110,7 +110,6 @@ fun validateCDK(params: ValidateParams): Resp {
         }
         qr.next().run {
             ValidTuple(
-                this[CDK.key]!!,
                 this[CDK.status]!!,
                 this[CDK.expireTime]!!,
                 this[CDK.specificationId]
