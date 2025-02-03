@@ -67,6 +67,7 @@ fun renewCDK(params: RenewParams): Resp {
         set(CDK.expireTime, expireTime)
     }
     (row > 0).throwIfNot("cdk renew failed")
+    C.invalidate(cdk)
 
     return Resp.success()
 }
@@ -177,9 +178,7 @@ private fun limit(cdk: String) {
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
     val key = "limit:${date}:${cdk}"
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
-    (cnt > Props.Extra.limitCount).throwIf("your account has been restricted for today")
-
-    RDS.get().incr(key)
+    (cnt > Props.Extra.limitCount).throwIf("your account has reached the most downloads today")
 
     if (cnt == 0) {
         RDS.get().expire(key, Duration.ofDays(1))
