@@ -172,7 +172,7 @@ fun validateCDK(params: ValidateParams): Resp {
 }
 
 private fun limit(cdk: String) {
-    if (!Boolean.equals(Props.Extra.limitEnabled)) {
+    if (!Props.Extra.limitEnabled) {
         return
     }
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
