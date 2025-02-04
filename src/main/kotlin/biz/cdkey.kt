@@ -178,6 +178,6 @@ private fun limit(cdk: String) {
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
     val key = "limit:${date}:${cdk}"
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
-    (cnt > Props.Extra.limitCount).throwIf("your account has reached the most downloads today")
+    (cnt > Props.Extra.limitCount).throwIf("Your cdkey has reached the most downloads today")
 
 }
