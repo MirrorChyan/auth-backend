@@ -180,7 +180,4 @@ private fun limit(cdk: String) {
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
     (cnt > Props.Extra.limitCount).throwIf("your account has reached the most downloads today")
 
-    if (cnt == 0) {
-        RDS.get().expire(key, Duration.ofDays(1))
-    }
 }
