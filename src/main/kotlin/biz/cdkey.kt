@@ -107,7 +107,7 @@ fun validateCDK(params: ValidateParams): Resp {
             }
             .iterator()
         if (!qr.hasNext()) {
-            throw ServiceException("invalid cdk")
+            throw ServiceException("Please confirm that you have entered the correct cdkey")
         }
         qr.next().run {
             ValidTuple(
