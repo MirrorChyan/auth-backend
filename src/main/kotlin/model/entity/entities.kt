@@ -19,8 +19,9 @@ object OperationLog : Table<Nothing>("mirrorc_operation_log") {
     val id = int("id").primaryKey()
     val cdk = varchar("cdk")
     val specificationId = varchar("specification_id")
+    val ip = varchar("ip")
     val ua = varchar("ua")
-    val source = varchar("source")
+    val resource = varchar("resource")
     val type = varchar("type")
     val createdAt = datetime("created_at")
 }

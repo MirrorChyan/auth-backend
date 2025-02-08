@@ -14,8 +14,6 @@ import utils.throwIf
 import utils.throwIfNot
 import utils.throwIfNullOrEmpty
 import java.nio.ByteBuffer
-import java.security.MessageDigest
-import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ThreadLocalRandom
@@ -90,16 +88,19 @@ fun acquireCDK(params: PlanParams): Resp {
 
 }
 
-@OptIn(ExperimentalStdlibApi::class)
-fun validateCDK(params: ValidateParams): Resp {
-    with(params) {
-        cdk.isNullOrBlank().throwIf("cdk cannot be empty")
-    }
-    val cdk = params.cdk!!
-    val tmp = params.specificationId
+private const val VALIDATE = "validate"
+private const val tips = "Please confirm that you have entered the correct cdkey"
 
+fun validateCDK(params: ValidateParams): Resp {
+
+    val cdk = params.cdk
+    if (cdk.isNullOrBlank()) {
+        throw ServiceException(tips)
+    }
 
     val record = C.get(cdk) {
+
+
         val qr = DB.from(CDK)
             .select(CDK.expireTime, CDK.specificationId, CDK.status)
             .where {
@@ -107,21 +108,18 @@ fun validateCDK(params: ValidateParams): Resp {
             }
             .iterator()
         if (!qr.hasNext()) {
-            throw ServiceException("Please confirm that you have entered the correct cdkey")
+            throw ServiceException(tips)
         }
         qr.next().run {
             ValidTuple(
                 this[CDK.status]!!,
                 this[CDK.expireTime]!!,
-                this[CDK.specificationId]
             )
         }
     }
 
     val expireTime = record.expireTime
     val status = record.status
-    val oldSpecId = record.spId
-
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
     limit(cdk)
@@ -130,28 +128,17 @@ fun validateCDK(params: ValidateParams): Resp {
     val isFirstBinding = status == 0
 
 
-    val specId = when {
-        tmp != null && oldSpecId == null -> {
-            MessageDigest.getInstance("SHA-256").digest(tmp.toByteArray()).toHexString()
-        }
+    if (isFirstBinding) {
 
-        else -> null
-    }
-    if (isFirstBinding || specId != null) {
-        C.invalidate(cdk)
         // ignore extreme races for now
         val row = DB.update(CDK) {
             where {
                 CDK.key eq cdk
             }
-            if (isFirstBinding) {
-                set(CDK.status, 1)
-            }
-            if (specId != null) {
-                set(CDK.specificationId, specId)
-            }
+            set(CDK.status, 1)
         }
 
+        C.invalidate(cdk)
         (row > 0).throwIfNot("cdk binding update failed")
     }
 
@@ -160,15 +147,15 @@ fun validateCDK(params: ValidateParams): Resp {
     BT.enqueue(
         LogRecord(
             cdk = cdk,
-            source = params.source,
-            spId = specId ?: oldSpecId,
-            type = "validate",
+            resource = params.resource,
+            type = VALIDATE,
             ua = params.ua,
+            ip = params.ip,
             time = LocalDateTime.now()
         )
     )
 
-    return Resp.success(isFirstBinding)
+    return Resp.success()
 }
 
 private fun limit(cdk: String) {

@@ -43,10 +43,6 @@ class RenewParams {
  * @constructor 创建[ValidateParams]
  */
 class ValidateParams {
-    /**
-     * 硬件ID
-     *  */
-    var specificationId: String? = null
 
     /**
      * CDK
@@ -54,14 +50,19 @@ class ValidateParams {
     var cdk: String? = null
 
     /**
-     * 来源
+     * 资源类型
      *  */
-    var source: String? = null
+    var resource: String? = null
 
     /**
      * user-agent
      *  */
     var ua: String? = null
+
+    /**
+     * ip
+     */
+    var ip: String? = ""
 }
 
 
