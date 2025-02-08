@@ -31,13 +31,15 @@ fun doSendBillingCheckIn(cdk: String, resource: String, ua: String) {
             "module": ""
         }
     """.trimIndent().toRequestBody(contentType = JSON_MT)
-    val resp = Request.Builder()
+    Request.Builder()
         .url(Props.Extra.billingCheckInUrl)
         .post(body)
         .build().let {
             C.newCall(it).execute()
+        }.use {
+            if (it.code != 200) {
+                log.error("BillingCheckIn response {}", it.body?.string())
+            }
         }
-    if (resp.code != 200) {
-        log.error("BillingCheckIn response {}", resp.body?.string())
-    }
+
 }
