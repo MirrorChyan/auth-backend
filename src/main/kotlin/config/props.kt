@@ -61,5 +61,8 @@ object Props {
         val limitCount: Long by lazy {
             TomlStore.config.value.getLong("extra.limit.count") ?: 7
         }
+        val billingCheckInUrl: String by lazy {
+            TomlStore.config.value.getString("extra.billing.checkin_url")
+        }
     }
 }

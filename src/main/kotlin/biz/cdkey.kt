@@ -122,7 +122,7 @@ fun validateCDK(params: ValidateParams): Resp {
     val status = record.status
     expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
 
-    limit(cdk)
+    doLimit(cdk)
 
 
     val isFirstBinding = status == 0
@@ -142,6 +142,9 @@ fun validateCDK(params: ValidateParams): Resp {
         (row > 0).throwIfNot("cdk binding update failed")
     }
 
+    Thread.startVirtualThread {
+        doSendBillingCheckIn(cdk, params.resource ?: "", params.ua ?: "")
+    }
 
     // log
     BT.enqueue(
@@ -158,7 +161,7 @@ fun validateCDK(params: ValidateParams): Resp {
     return Resp.success()
 }
 
-private fun limit(cdk: String) {
+private fun doLimit(cdk: String) {
     if (!Props.Extra.limitEnabled) {
         return
     }
