@@ -28,7 +28,7 @@ fun doSendBillingCheckIn(cdk: String, resource: String, ua: String) {
             "cdk": "$cdk",
             "application": "$resource",
             "user_agent": "$ua",
-            "module": "",
+            "module": ""
         }
     """.trimIndent().toRequestBody(contentType = JSON_MT)
     val resp = Request.Builder()
