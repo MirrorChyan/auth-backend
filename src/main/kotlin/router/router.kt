@@ -67,6 +67,7 @@ private fun requireJsonParams(ctx: RoutingContext): String? {
  * @param [router]
  */
 private fun dispatch(router: Router) {
+
     router.post("/acquire").handler { ctx ->
         requireJsonParams(ctx)?.let {
             val p = JSON.parseObject(it, PlanParams::class.java)
@@ -76,6 +77,7 @@ private fun dispatch(router: Router) {
             }
         }
     }
+
     router.post("/renew").handler { ctx ->
         requireJsonParams(ctx)?.let {
             val p = JSON.parseObject(it, RenewParams::class.java)
@@ -86,6 +88,7 @@ private fun dispatch(router: Router) {
         }
 
     }
+
     router.post("/validate").handler { ctx ->
         requireJsonParams(ctx)?.let {
             val p = JSON.parseObject(it, ValidateParams::class.java)

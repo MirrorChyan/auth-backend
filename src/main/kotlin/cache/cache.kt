@@ -7,14 +7,13 @@ import datasource.DB
 import model.LogRecord
 import model.ValidTuple
 import model.entity.OperationLog
-import org.ktorm.dsl.QueryRowSet
 import org.ktorm.dsl.batchInsert
 import java.util.concurrent.TimeUnit
 
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
     .maximumSize(100)
-    .expireAfterWrite(10, TimeUnit.MINUTES)
+    .expireAfterWrite(30, TimeUnit.MINUTES)
     .softValues()
     .build()
 
@@ -22,7 +21,7 @@ var BT: BufferTrigger<LogRecord> = run {
     BufferTrigger.batchBlocking<LogRecord>()
         .bufferSize(1000)
         .batchSize(500)
-        .linger(30, TimeUnit.SECONDS)
+        .linger(5, TimeUnit.SECONDS)
         .setConsumerEx {
             Thread.startVirtualThread {
                 val l = ArrayList(it)
@@ -30,8 +29,9 @@ var BT: BufferTrigger<LogRecord> = run {
                     l.forEach { v ->
                         item {
                             set(OperationLog.cdk, v.cdk)
-                            set(OperationLog.source, v.source)
+                            set(OperationLog.resource, v.resource)
                             set(OperationLog.ua, v.ua)
+                            set(OperationLog.ip, v.ip)
                             set(OperationLog.type, v.type)
                             set(OperationLog.createdAt, v.time)
                         }
