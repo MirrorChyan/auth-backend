@@ -66,16 +66,10 @@ class ValidateParams {
 }
 
 
-class CreateApplicationParams {
-    /**
-     * 应用名称
-     * */
-    var applicationName: String? = null
-}
-
 class CreateTokenParams {
+
     /**
-     * 应用ID
-     * */
-    var applicationId: Int? = null
+     * 可适用的资源ID
+     */
+    var resourceIdList: List<String>? = null
 }

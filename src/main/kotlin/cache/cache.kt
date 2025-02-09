@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit
 
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
-    .maximumSize(100)
     .expireAfterWrite(30, TimeUnit.MINUTES)
     .softValues()
     .build()

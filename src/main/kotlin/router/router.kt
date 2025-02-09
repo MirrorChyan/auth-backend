@@ -1,9 +1,6 @@
 package router
 
-import biz.acquireCDK
-import biz.renewCDK
-import biz.validateCDK
-import biz.validateToken
+import biz.*
 import com.alibaba.fastjson2.JSON
 import exception.ServiceException
 import io.vertx.core.Promise
@@ -14,10 +11,7 @@ import io.vertx.ext.web.Router.router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
 import metrics.registry
-import model.PlanParams
-import model.RenewParams
-import model.Resp
-import model.ValidateParams
+import model.*
 import org.slf4j.LoggerFactory
 import utils.execute
 
@@ -101,9 +95,22 @@ private fun dispatch(router: Router) {
 
     router.post("/develop/validate").handler { ctx ->
         val token: String? = ctx.request().getParam("token")
+        val resourceId = ctx.request().getParam("rid") ?: ""
         ctx.response().putHeader("Content-Type", "application/json")
         Promise.promise<String>().execute(ctx) {
-            validateToken(token).toJson()
+            validateToken(token, resourceId).toJson()
+        }
+    }
+
+    router.post("/upload/token").handler { ctx ->
+        requireJsonParams(ctx)?.let {
+            ctx.response().putHeader("Content-Type", "application/json")
+            Promise.promise<String>().execute(ctx) {
+                CreateTokenParams().let { v ->
+                    v.resourceIdList = JSON.parseArray(it, String::class.java)
+                    createApplicationToken(v)
+                }.toJson()
+            }
         }
     }
 
