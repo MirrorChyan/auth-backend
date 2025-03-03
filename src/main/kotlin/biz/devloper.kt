@@ -3,7 +3,8 @@ package biz
 import cache.CT_CACHE
 import com.alibaba.fastjson2.JSON
 import datasource.DB
-import model.CreateCdkTypeParams
+import exception.ServiceException
+import model.CdkTypeParams
 import model.CreateTokenParams
 import model.Resp
 import model.entity.ApplicationToken
@@ -42,7 +43,7 @@ fun validateToken(token: String?, resourceId: String): Resp {
     return Resp.success()
 }
 
-fun createCdkType(params: CreateCdkTypeParams): Resp {
+fun createCdkType(params: CdkTypeParams): Resp {
     with(params) {
         type.throwIfNullOrEmpty("typeId cannot be empty")
         resourceIdList.throwIfNullOrEmpty("resourceIdList can't be empty")
@@ -54,6 +55,9 @@ fun createCdkType(params: CreateCdkTypeParams): Resp {
     val tip = if (exist) {
         DB.update(CDKType) {
             set(CDKType.resourcesGroup, JSON.toJSONString(params.resourceIdList))
+            where {
+                CDKType.typeId eq params.type!!
+            }
         }
         "update success"
     } else {
@@ -67,6 +71,36 @@ fun createCdkType(params: CreateCdkTypeParams): Resp {
     CT_CACHE.invalidate(params.type)
 
     return Resp(0, tip)
+}
+
+
+fun appendCdkType(params: CdkTypeParams): Resp {
+    with(params) {
+        type.throwIfNullOrEmpty("typeId cannot be empty")
+        resourceIdList.throwIfNullOrEmpty("resourceIdList can't be empty")
+    }
+    val itr = DB.from(CDKType).select(CDKType.typeId, CDKType.resourcesGroup)
+        .where {
+            CDKType.typeId eq params.type!!
+        }.limit(1).iterator()
+    val exist = itr.hasNext()
+    if (!exist) {
+        throw ServiceException("type not exist")
+    }
+    val next = itr.next()
+    val set = HashSet(JSON.parseArray(next[CDKType.resourcesGroup], String::class.java))
+
+    set.addAll(params.resourceIdList!!)
+
+    DB.update(CDKType) {
+        set(CDKType.resourcesGroup, JSON.toJSONString(set))
+        where {
+            CDKType.typeId eq params.type!!
+        }
+    }
+    CT_CACHE.invalidate(params.type)
+
+    return Resp.success(set)
 }
 
 fun createApplicationToken(params: CreateTokenParams): Resp {

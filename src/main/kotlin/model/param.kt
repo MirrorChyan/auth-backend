@@ -63,7 +63,7 @@ class ValidateParams {
 }
 
 
-class CreateCdkTypeParams {
+class CdkTypeParams {
     var type: String? = null
 
     /**

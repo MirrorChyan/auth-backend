@@ -96,10 +96,20 @@ private fun dispatch(router: Router) {
 
     router.post("/create/cdk/type").handler { ctx ->
         requireJsonParams(ctx)?.let {
-            val p = JSON.parseObject(it, CreateCdkTypeParams::class.java)
+            val p = JSON.parseObject(it, CdkTypeParams::class.java)
             ctx.response().putHeader("Content-Type", "application/json")
             Promise.promise<String>().execute(ctx) {
                 createCdkType(p).toJson()
+            }
+        }
+    }
+
+    router.put("/append/cdk/type").handler { ctx ->
+        requireJsonParams(ctx)?.let {
+            val p = JSON.parseObject(it, CdkTypeParams::class.java)
+            ctx.response().putHeader("Content-Type", "application/json")
+            Promise.promise<String>().execute(ctx) {
+                appendCdkType(p).toJson()
             }
         }
     }
