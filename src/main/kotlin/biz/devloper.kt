@@ -1,10 +1,13 @@
 package biz
 
+import cache.CT_CACHE
 import com.alibaba.fastjson2.JSON
 import datasource.DB
+import model.CreateCdkTypeParams
 import model.CreateTokenParams
 import model.Resp
 import model.entity.ApplicationToken
+import model.entity.CDKType
 import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
@@ -19,7 +22,7 @@ import java.util.*
 fun validateToken(token: String?, resourceId: String): Resp {
     val tk = token.throwIfNullOrEmpty("The Token cannot be empty", 400)
     val qr = DB.from(ApplicationToken)
-        .select(ApplicationToken.status, ApplicationToken.id,ApplicationToken.resourceList)
+        .select(ApplicationToken.status, ApplicationToken.id, ApplicationToken.resourceList)
         .where {
             ApplicationToken.applicationToken eq tk
         }
@@ -39,6 +42,32 @@ fun validateToken(token: String?, resourceId: String): Resp {
     return Resp.success()
 }
 
+fun createCdkType(params: CreateCdkTypeParams): Resp {
+    with(params) {
+        type.throwIfNullOrEmpty("typeId cannot be empty")
+        resourceIdList.throwIfNullOrEmpty("resourceIdList can't be empty")
+    }
+    val exist = DB.from(CDKType).select(CDKType.typeId)
+        .where {
+            CDKType.typeId eq params.type!!
+        }.limit(1).iterator().hasNext()
+    val tip = if (exist) {
+        DB.update(CDKType) {
+            set(CDKType.resourcesGroup, JSON.toJSONString(params.resourceIdList))
+        }
+        "update success"
+    } else {
+        DB.insert(CDKType) {
+            set(CDKType.typeId, params.type)
+            set(CDKType.resourcesGroup, JSON.toJSONString(params.resourceIdList))
+        }
+        "add success"
+    }
+
+    CT_CACHE.invalidate(params.type)
+
+    return Resp(0, tip)
+}
 
 fun createApplicationToken(params: CreateTokenParams): Resp {
     val list = params.resourceIdList

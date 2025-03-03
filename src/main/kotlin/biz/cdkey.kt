@@ -3,12 +3,15 @@ package biz
 
 import cache.BT
 import cache.C
+import cache.CT_CACHE
+import com.alibaba.fastjson2.JSON
 import config.Props
 import config.RDS
 import datasource.DB
 import exception.ServiceException
 import model.*
 import model.entity.CDK
+import model.entity.CDKType
 import org.ktorm.dsl.*
 import utils.throwIf
 import utils.throwIfNot
@@ -70,6 +73,7 @@ fun renewCDK(params: RenewParams): Resp {
     return Resp.success()
 }
 
+
 fun acquireCDK(params: PlanParams): Resp {
     with(params) {
         (params.expireTime == null || params.expireTime!!.isBefore(LocalDateTime.now())).throwIf("The expiration time is incorrectly set")
@@ -78,10 +82,12 @@ fun acquireCDK(params: PlanParams): Resp {
     val eTime = params.expireTime!!
 
     val key = next()
+    val type = params.typeId ?: Universal
 
     DB.insert(CDK) {
         set(CDK.key, key)
         set(CDK.expireTime, eTime)
+        set(CDK.typeId, type)
     }
 
     return Resp.success(key)
@@ -100,9 +106,8 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val record = C.get(cdk) {
 
-
         val qr = DB.from(CDK)
-            .select(CDK.expireTime, CDK.specificationId, CDK.status)
+            .select(CDK.expireTime, CDK.specificationId, CDK.status, CDK.typeId)
             .where {
                 CDK.key eq cdk
             }
@@ -114,19 +119,30 @@ fun validateCDK(params: ValidateParams): Resp {
             ValidTuple(
                 this[CDK.status]!!,
                 this[CDK.expireTime]!!,
+                this[CDK.typeId],
             )
         }
     }
 
     val expireTime = record.expireTime
     val status = record.status
-    expireTime.isBefore(LocalDateTime.now()).throwIf("The cdk has expired")
+
+    val timeout = expireTime.isBefore(LocalDateTime.now())
+    if (timeout) {
+        C.invalidate(cdk)
+        return Resp.fail("The cdk has expired")
+    }
 
     doLimit(cdk)
 
 
-    val isFirstBinding = status == 0
+    val checked = checkCdkType(record.typeId, params.resource)
 
+    if (!checked) {
+        throw ServiceException("Current cdk cannot download this resource, please check your cdk type")
+    }
+
+    val isFirstBinding = status == 0
 
     if (isFirstBinding) {
 
@@ -160,6 +176,40 @@ fun validateCDK(params: ValidateParams): Resp {
 
     return Resp.success()
 }
+
+
+private fun checkCdkType(typeId: String?, resource: String?): Boolean {
+    if (typeId == null || resource == null) {
+        return true
+    }
+
+    val set = CT_CACHE.get(typeId) {
+        val itr = DB.from(CDKType)
+            .select(CDKType.resourcesGroup)
+            .where {
+                CDKType.typeId eq typeId
+            }
+            .limit(1)
+            .iterator()
+
+        if (itr.hasNext()) {
+            itr.next().let {
+                it[CDKType.resourcesGroup]?.let { rg ->
+                    if (rg == "") {
+                        emptySet()
+                    } else {
+                        HashSet(JSON.parseArray(rg, String::class.java))
+                    }
+                } ?: emptySet()
+            }
+        } else {
+            emptySet()
+        }
+    }
+
+    return set.contains(resource)
+}
+
 
 private fun doLimit(cdk: String) {
     if (!Props.Extra.limitEnabled) {

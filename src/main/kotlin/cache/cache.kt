@@ -12,7 +12,12 @@ import java.util.concurrent.TimeUnit
 
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
-    .expireAfterWrite(30, TimeUnit.MINUTES)
+    .expireAfterWrite(12, TimeUnit.HOURS)
+    .softValues()
+    .build()
+
+val CT_CACHE: Cache<String, Set<String>> = Caffeine.newBuilder()
+    .expireAfterWrite(24, TimeUnit.HOURS)
     .softValues()
     .build()
 

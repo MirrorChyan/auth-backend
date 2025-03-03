@@ -19,10 +19,7 @@ class PlanParams {
      *  */
     var expireTime: LocalDateTime? = null
 
-    /**
-     * 购买数量
-     * */
-    var quantity: Int = 1
+    var typeId: String? = null
 }
 
 class RenewParams {
@@ -65,6 +62,15 @@ class ValidateParams {
     var ip: String? = ""
 }
 
+
+class CreateCdkTypeParams {
+    var type: String? = null
+
+    /**
+     * 可适用的资源ID
+     */
+    var resourceIdList: List<String>? = null
+}
 
 class CreateTokenParams {
 

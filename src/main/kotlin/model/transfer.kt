@@ -15,4 +15,5 @@ data class LogRecord(
 class ValidTuple(
     val status: Int,
     val expireTime: LocalDateTime,
+    val typeId: String?,
 )

@@ -12,6 +12,7 @@ object CDK : Table<Nothing>("mirrorc_cdk") {
 
     // 0 未使用 1 已使用
     val status = int("status")
+    val typeId = varchar("type_id")
     val expireTime = datetime("expire_time")
     val createdAt = datetime("created_at")
 }
@@ -24,6 +25,12 @@ object OperationLog : Table<Nothing>("mirrorc_operation_log") {
     val ua = varchar("ua")
     val resource = varchar("resource")
     val type = varchar("type")
+    val createdAt = datetime("created_at")
+}
+
+object CDKType : Table<Nothing>("mirrorc_cdk_type") {
+    val typeId = varchar("type_id").primaryKey()
+    val resourcesGroup = varchar("resources_group")
     val createdAt = datetime("created_at")
 }
 
