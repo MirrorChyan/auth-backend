@@ -9,8 +9,10 @@ import model.LogRecord
 import model.ValidTuple
 import model.entity.OperationLog
 import org.ktorm.dsl.batchInsert
+import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
+private val log = LoggerFactory.getLogger("CacheKt")!!
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
     .expireAfterWrite(12, TimeUnit.HOURS)
@@ -50,7 +52,9 @@ var BT: BufferTrigger<LogRecord> = run {
 
 
 fun evictAll() {
+    log.info("evict cdk type cache size {}", CT_CACHE.estimatedSize())
     CT_CACHE.invalidateAll()
+    log.info("evict cdk cache size {}", C.estimatedSize())
     C.invalidateAll()
 }
 
