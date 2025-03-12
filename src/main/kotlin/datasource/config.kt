@@ -1,5 +1,6 @@
 package datasource
 
+import cache.doSubscribeEvictEvent
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import config.Props
@@ -20,4 +21,5 @@ fun config() {
     }
 
     initMetrics()
+    doSubscribeEvictEvent()
 }

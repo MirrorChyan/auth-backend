@@ -3,6 +3,7 @@ package cache
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.phantomthief.collection.BufferTrigger
+import config.RDS
 import datasource.DB
 import model.LogRecord
 import model.ValidTuple
@@ -45,6 +46,16 @@ var BT: BufferTrigger<LogRecord> = run {
         .build().apply {
             Runtime.getRuntime().addShutdownHook(Thread { manuallyDoTrigger() })
         }
+}
+
+
+fun evictAll() {
+    CT_CACHE.invalidateAll()
+    C.invalidateAll()
+}
+
+fun doSubscribeEvictEvent() {
+    RDS.subscribe()
 }
 
 
