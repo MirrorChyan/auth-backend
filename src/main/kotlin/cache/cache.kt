@@ -18,7 +18,6 @@ val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
 
 val CT_CACHE: Cache<String, Set<String>> = Caffeine.newBuilder()
     .expireAfterWrite(24, TimeUnit.HOURS)
-    .softValues()
     .build()
 
 var BT: BufferTrigger<LogRecord> = run {

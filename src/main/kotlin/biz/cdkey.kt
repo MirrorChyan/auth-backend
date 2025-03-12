@@ -8,11 +8,11 @@ import com.alibaba.fastjson2.JSON
 import config.Props
 import config.RDS
 import datasource.DB
-import exception.ServiceException
 import model.*
 import model.entity.CDK
 import model.entity.CDKType
 import org.ktorm.dsl.*
+import org.slf4j.LoggerFactory
 import utils.throwIf
 import utils.throwIfNot
 import utils.throwIfNullOrEmpty
@@ -28,6 +28,9 @@ const val ST: Int = 0xBADF00D
 private val NEXT_INC = AtomicInteger(ThreadLocalRandom.current().nextInt())
 
 private val CIR = intArrayOf(1, 4, 5, 9, 8, 1, 5)
+
+
+private val log = LoggerFactory.getLogger("CDKEYKt")!!
 
 /**
  * 凑合用一下
@@ -90,6 +93,8 @@ fun acquireCDK(params: PlanParams): Resp {
         set(CDK.typeId, type)
     }
 
+    C.invalidate(key)
+
     return Resp.success(key)
 
 }
@@ -97,11 +102,13 @@ fun acquireCDK(params: PlanParams): Resp {
 private const val VALIDATE = "validate"
 private const val tips = "Please confirm that you have entered the correct cdkey"
 
+private val EMPTY = ValidTuple(-1, LocalDateTime.now(), null)
+
 fun validateCDK(params: ValidateParams): Resp {
 
     val cdk = params.cdk
-    if (cdk.isNullOrBlank()) {
-        throw ServiceException(tips)
+    if (cdk.isNullOrBlank() || cdk.length > 30 || cdk.length < 10) {
+        return Resp.fail(tips)
     }
 
     val record = C.get(cdk) {
@@ -112,16 +119,22 @@ fun validateCDK(params: ValidateParams): Resp {
                 CDK.key eq cdk
             }
             .iterator()
-        if (!qr.hasNext()) {
-            throw ServiceException(tips)
+        if (qr.hasNext()) {
+            qr.next().run {
+                ValidTuple(
+                    this[CDK.status]!!,
+                    this[CDK.expireTime]!!,
+                    this[CDK.typeId],
+                )
+            }
+        } else {
+            EMPTY
         }
-        qr.next().run {
-            ValidTuple(
-                this[CDK.status]!!,
-                this[CDK.expireTime]!!,
-                this[CDK.typeId],
-            )
-        }
+
+    }
+
+    if (record.status == -1) {
+        return Resp.fail(tips)
     }
 
     val expireTime = record.expireTime
@@ -133,13 +146,15 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail("The cdk has expired")
     }
 
-    doLimit(cdk)
-
+    if (doLimit(cdk)) {
+        log.warn("cdk limit download {}", cdk)
+        return Resp.fail("Your cdkey has reached the most downloads today")
+    }
 
     val checked = checkCdkType(record.typeId, params.resource)
 
     if (!checked) {
-        throw ServiceException("Current cdk cannot download this resource, please check your cdk type")
+        return Resp.fail("Current cdk cannot download this resource, please check your cdk type")
     }
 
     val isFirstBinding = status == 0
@@ -211,13 +226,13 @@ private fun checkCdkType(typeId: String?, resource: String?): Boolean {
 }
 
 
-private fun doLimit(cdk: String) {
+private fun doLimit(cdk: String): Boolean {
     if (!Props.Extra.limitEnabled) {
-        return
+        return true
     }
     val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
     val key = "limit:${date}:${cdk}"
     val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
-    (cnt > Props.Extra.limitCount).throwIf("Your cdkey has reached the most downloads today")
 
+    return cnt < Props.Extra.limitCount
 }
