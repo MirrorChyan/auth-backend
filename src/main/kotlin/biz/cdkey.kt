@@ -146,7 +146,7 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail("The cdk has expired")
     }
 
-    if (doLimit(cdk)) {
+    if (!doLimit(cdk)) {
         log.warn("cdk limit download {}", cdk)
         return Resp.fail("Your cdkey has reached the most downloads today")
     }
