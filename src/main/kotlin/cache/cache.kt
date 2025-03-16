@@ -15,12 +15,12 @@ import java.util.concurrent.TimeUnit
 private val log = LoggerFactory.getLogger("CacheKt")!!
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
-    .expireAfterWrite(12, TimeUnit.HOURS)
+    .expireAfterWrite(7, TimeUnit.DAYS)
     .softValues()
     .build()
 
 val CT_CACHE: Cache<String, Set<String>> = Caffeine.newBuilder()
-    .expireAfterWrite(24, TimeUnit.HOURS)
+    .expireAfterWrite(7, TimeUnit.DAYS)
     .build()
 
 var BT: BufferTrigger<LogRecord> = run {

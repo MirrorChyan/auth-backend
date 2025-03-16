@@ -134,7 +134,7 @@ fun validateCDK(params: ValidateParams): Resp {
     }
 
     if (record.status == -1) {
-        return Resp.fail(tips, KEY_EXPIRED)
+        return Resp.fail(tips, KEY_INVALID)
     }
 
     val expireTime = record.expireTime
@@ -142,7 +142,6 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val timeout = expireTime.isBefore(LocalDateTime.now())
     if (timeout) {
-        C.invalidate(cdk)
         return Resp.fail("The cdk has expired", KEY_EXPIRED)
     }
 
