@@ -108,7 +108,7 @@ fun validateCDK(params: ValidateParams): Resp {
 
     val cdk = params.cdk
     if (cdk.isNullOrBlank() || cdk.length > 30 || cdk.length < 10) {
-        return Resp.fail(tips)
+        return Resp.fail(tips, KEY_INVALID)
     }
 
     val record = C.get(cdk) {
@@ -134,7 +134,7 @@ fun validateCDK(params: ValidateParams): Resp {
     }
 
     if (record.status == -1) {
-        return Resp.fail(tips)
+        return Resp.fail(tips, KEY_EXPIRED)
     }
 
     val expireTime = record.expireTime
@@ -143,18 +143,18 @@ fun validateCDK(params: ValidateParams): Resp {
     val timeout = expireTime.isBefore(LocalDateTime.now())
     if (timeout) {
         C.invalidate(cdk)
-        return Resp.fail("The cdk has expired")
+        return Resp.fail("The cdk has expired", KEY_EXPIRED)
     }
 
     if (!doLimit(cdk)) {
         log.warn("cdk limit download {}", cdk)
-        return Resp.fail("Your cdkey has reached the most downloads today")
+        return Resp.fail("Your cdkey has reached the most downloads today", RESOURCE_QUOTA_EXHAUSTED)
     }
 
     val checked = checkCdkType(record.typeId, params.resource)
 
     if (!checked) {
-        return Resp.fail("Current cdk cannot download this resource, please check your cdk type")
+        return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
     }
 
     val isFirstBinding = status == 0

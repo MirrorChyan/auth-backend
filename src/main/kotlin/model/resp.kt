@@ -10,7 +10,7 @@ data class Resp(
 
     companion object {
         fun success(data: Any? = null) = Resp(0, "success", data)
-        fun fail(msg: String?) = Resp(1, msg)
+        fun fail(msg: String?, code: Int = 1) = Resp(code, msg)
     }
 
     fun toJson(): String {
