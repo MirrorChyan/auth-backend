@@ -84,13 +84,13 @@ fun acquireCDK(params: PlanParams): Resp {
 
     val eTime = params.expireTime!!
 
+    val typeId = params.typeId ?: return Resp.fail("please set the typeId")
     val key = next()
-    val type = params.typeId ?: Universal
 
     DB.insert(CDK) {
         set(CDK.key, key)
         set(CDK.expireTime, eTime)
-        set(CDK.typeId, type)
+        set(CDK.typeId, typeId)
     }
 
     C.invalidate(key)
@@ -194,7 +194,7 @@ fun validateCDK(params: ValidateParams): Resp {
 
 private fun checkCdkType(typeId: String?, resource: String?): Boolean {
     if (typeId == null || resource == null) {
-        return true
+        return false
     }
 
     val set = CT_CACHE.get(typeId) {
@@ -206,18 +206,20 @@ private fun checkCdkType(typeId: String?, resource: String?): Boolean {
             .limit(1)
             .iterator()
 
-        if (itr.hasNext()) {
-            itr.next().let {
-                it[CDKType.resourcesGroup]?.let { rg ->
-                    if (rg == "") {
-                        emptySet()
-                    } else {
-                        HashSet(JSON.parseArray(rg, String::class.java))
-                    }
-                } ?: emptySet()
+        when {
+            itr.hasNext() -> {
+                itr.next().let {
+                    it[CDKType.resourcesGroup]?.let { rg ->
+                        if (rg != "") {
+                            emptySet()
+                        } else {
+                            HashSet(JSON.parseArray(rg, String::class.java))
+                        }
+                    } ?: emptySet()
+                }
             }
-        } else {
-            emptySet()
+
+            else -> emptySet()
         }
     }
 
