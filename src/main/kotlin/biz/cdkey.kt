@@ -172,9 +172,7 @@ fun validateCDK(params: ValidateParams): Resp {
         (row > 0).throwIfNot("cdk binding update failed")
     }
 
-    Thread.startVirtualThread {
-        doSendBillingCheckIn(cdk, params.resource ?: "", params.ua ?: "")
-    }
+    doSendBillingCheckIn(cdk, params.resource ?: "", params.ua ?: "")
 
     // log
     BT.enqueue(
