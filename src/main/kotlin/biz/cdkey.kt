@@ -150,11 +150,11 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail("Your cdkey has reached the most downloads today", RESOURCE_QUOTA_EXHAUSTED)
     }
 
-    val checked = checkCdkType(record.typeId, params.resource)
-
-    if (!checked) {
-        return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
-    }
+//    val checked = checkCdkType(record.typeId, params.resource)
+//
+//    if (!checked) {
+//        return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
+//    }
 
     val isFirstBinding = status == 0
 
