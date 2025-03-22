@@ -102,7 +102,7 @@ fun acquireCDK(params: PlanParams): Resp {
 private const val VALIDATE = "validate"
 private const val tips = "Please confirm that you have entered the correct cdkey"
 
-private val EMPTY = ValidTuple(-1, LocalDateTime.now(), null)
+private val EMPTY = ValidTuple(-1, LocalDateTime.now(), "")
 
 fun validateCDK(params: ValidateParams): Resp {
 
@@ -114,7 +114,7 @@ fun validateCDK(params: ValidateParams): Resp {
     val record = C.get(cdk) {
 
         val qr = DB.from(CDK)
-            .select(CDK.expireTime, CDK.specificationId, CDK.status, CDK.typeId)
+            .select(CDK.expireTime, CDK.status, CDK.typeId)
             .where {
                 CDK.key eq cdk
             }
@@ -124,7 +124,7 @@ fun validateCDK(params: ValidateParams): Resp {
                 ValidTuple(
                     this[CDK.status]!!,
                     this[CDK.expireTime]!!,
-                    this[CDK.typeId],
+                    this[CDK.typeId]!!,
                 )
             }
         } else {
@@ -150,11 +150,11 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail("Your cdkey has reached the most downloads today", RESOURCE_QUOTA_EXHAUSTED)
     }
 
-//    val checked = checkCdkType(record.typeId, params.resource)
-//
-//    if (!checked) {
-//        return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
-//    }
+    val checked = checkCdkType(record.typeId, params.resource)
+
+    if (!checked) {
+        return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
+    }
 
     val isFirstBinding = status == 0
 
@@ -205,18 +205,10 @@ private fun checkCdkType(typeId: String?, resource: String?): Boolean {
             .iterator()
 
         when {
-            itr.hasNext() -> {
-                itr.next().let {
-                    it[CDKType.resourcesGroup]?.let { rg ->
-                        if (rg != "") {
-                            emptySet()
-                        } else {
-                            HashSet(JSON.parseArray(rg, String::class.java))
-                        }
-                    } ?: emptySet()
-                }
-            }
-
+            itr.hasNext() -> itr.next()[CDKType.resourcesGroup]
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { JSON.parseArray(it, String::class.java).toHashSet() }
+                ?: emptySet()
             else -> emptySet()
         }
     }
