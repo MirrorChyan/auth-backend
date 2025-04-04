@@ -145,4 +145,8 @@ private fun dispatch(router: Router) {
         ctx.end()
     }
 
+    router.get("/health").handler { ctx ->
+        ctx.response().setStatusCode(200).end()
+    }
+
 }
