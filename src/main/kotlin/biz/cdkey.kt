@@ -172,15 +172,17 @@ fun validateCDK(params: ValidateParams): Resp {
         (row > 0).throwIfNot("cdk binding update failed")
     }
 
-    doSendBillingCheckIn(cdk, params.resource ?: "", params.ua ?: "")
+    val resource = params.resource ?: ""
+    val ua = params.ua ?: "$resource-NoUA"
+    doSendBillingCheckIn(cdk, resource, ua)
 
     // log
     BT.enqueue(
         LogRecord(
             cdk = cdk,
-            resource = params.resource,
+            resource = resource,
             type = VALIDATE,
-            ua = params.ua,
+            ua = ua,
             ip = params.ip,
             time = LocalDateTime.now()
         )
@@ -209,6 +211,7 @@ private fun checkCdkType(typeId: String?, resource: String?): Boolean {
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { JSON.parseArray(it, String::class.java).toHashSet() }
                 ?: emptySet()
+
             else -> emptySet()
         }
     }
