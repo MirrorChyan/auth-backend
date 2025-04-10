@@ -13,6 +13,7 @@ import model.entity.CDK
 import model.entity.CDKType
 import org.ktorm.dsl.*
 import org.slf4j.LoggerFactory
+import stat.StatHelper
 import utils.throwIf
 import utils.throwIfNot
 import utils.throwIfNullOrEmpty
@@ -155,6 +156,8 @@ fun validateCDK(params: ValidateParams): Resp {
     if (!checked) {
         return Resp.fail("Current cdk cannot download this resource, please check your cdk type", KEY_MISMATCHED)
     }
+
+    StatHelper.offer(cdk)
 
     val isFirstBinding = status == 0
 
