@@ -19,7 +19,7 @@ object StatHelper {
 
     fun poll() {
         Thread.startVirtualThread {
-            log.info("start stat stat polling")
+            log.info("start stat polling")
             while (true) {
                 LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(60))
                 val arr = arrayOfNulls<String>(Q.size)
