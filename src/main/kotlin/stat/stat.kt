@@ -20,7 +20,7 @@ object StatHelper {
         Thread.startVirtualThread {
             log.info("start stat polling")
             while (true) {
-                Thread.sleep(TimeUnit.SECONDS.toNanos(60))
+                Thread.sleep(TimeUnit.SECONDS.toMillis(60))
                 if (Q.isEmpty()) {
                     continue
                 }
@@ -29,7 +29,7 @@ object StatHelper {
                     arr[i] = Q.poll()
                 }
                 val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
-                val key = "key-stat:${date}"
+                val key = "stat:${date}"
                 RDS.get().pfadd(key, *arr)
             }
         }
