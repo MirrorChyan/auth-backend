@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource
 import config.Props
 import metrics.initMetrics
 import org.ktorm.database.Database
+import stat.StatHelper
 
 
 lateinit var DB: Database
@@ -22,4 +23,5 @@ fun config() {
 
     initMetrics()
     doSubscribeEvictEvent()
+    StatHelper.poll()
 }
