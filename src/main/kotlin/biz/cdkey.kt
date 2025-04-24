@@ -105,7 +105,29 @@ private const val VALIDATE = "validate"
 private const val tips = "Please confirm that you have entered the correct cdkey"
 private const val limitTips = "Your cdkey has reached the most downloads today"
 
-private val EMPTY = ValidTuple(-1, LocalDateTime.now(), "")
+private val EMPTY = ValidTuple(-1, LocalDateTime.now(), "", -1)
+
+
+private fun getCDKInfo(cdk: String) = run {
+    val qr = DB.from(CDK)
+        .select(CDK.expireTime, CDK.status, CDK.typeId, CDK.limit)
+        .where {
+            CDK.key eq cdk
+        }
+        .iterator()
+    if (qr.hasNext()) {
+        qr.next().run {
+            ValidTuple(
+                this[CDK.status]!!,
+                this[CDK.expireTime]!!,
+                this[CDK.typeId]!!,
+                this[CDK.limit]!!
+            )
+        }
+    } else {
+        EMPTY
+    }
+}
 
 fun validateCDK(params: ValidateParams): Resp {
 
@@ -114,28 +136,9 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail(tips, KEY_INVALID)
     }
 
-    val record = C.get(cdk) {
+    val record = C.get(cdk, ::getCDKInfo)
 
-        val qr = DB.from(CDK)
-            .select(CDK.expireTime, CDK.status, CDK.typeId)
-            .where {
-                CDK.key eq cdk
-            }
-            .iterator()
-        if (qr.hasNext()) {
-            qr.next().run {
-                ValidTuple(
-                    this[CDK.status]!!,
-                    this[CDK.expireTime]!!,
-                    this[CDK.typeId]!!,
-                )
-            }
-        } else {
-            EMPTY
-        }
-
-    }
-
+    // cache empty
     if (record.status == -1) {
         return Resp.fail(tips, KEY_INVALID)
     }
@@ -152,9 +155,9 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail("The cdk has expired", KEY_EXPIRED)
     }
 
-    if (!doLimit(cdk)) {
+    if (!doLimit(cdk, record.limit)) {
         log.warn("cdk limit download {}", cdk)
-        return Resp.fail("Your cdkey has reached the most downloads today", RESOURCE_QUOTA_EXHAUSTED)
+        return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
     }
 
     val checked = checkCdkType(record.typeId, params.resource)
@@ -234,7 +237,16 @@ fun validateDownload(info: ValidateParams): Resp {
     if (cdk.isBlank() || cdk.length > 30 || cdk.length < 10) {
         return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
     }
-    if (doLimit(cdk)) {
+
+    val record = C.get(cdk, ::getCDKInfo)
+
+    // cache empty
+    if (record.status == -1 || record.status == 3) {
+        return Resp.fail(tips, KEY_INVALID)
+    }
+    
+    val cnt = RDS.get().incr(KeyGenerator(cdk)).get() ?: 1
+    if (cnt - 1 < record.limit) {
         DOWNLOAD_TRIGGER.enqueue(
             DownloadRecord(
                 cdk = cdk,
@@ -248,17 +260,20 @@ fun validateDownload(info: ValidateParams): Resp {
         )
         return Resp.success()
     }
+
     return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
 }
 
+private val KeyGenerator: (String) -> String = {
+    val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
+    "limit:${date}:${it}"
+}
 
-private fun doLimit(cdk: String): Boolean {
+private fun doLimit(cdk: String, limit: Int): Boolean {
     if (!Props.Extra.limitEnabled) {
         return true
     }
-    val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
-    val key = "limit:${date}:${cdk}"
-    val cnt = RDS.get().get(key).get()?.toIntOrNull() ?: 0
+    val cnt = RDS.get().get(KeyGenerator(cdk)).get()?.toIntOrNull() ?: 0
 
-    return cnt < Props.Extra.limitCount
+    return cnt < limit
 }

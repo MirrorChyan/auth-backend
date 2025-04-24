@@ -26,4 +26,5 @@ class ValidTuple(
     val status: Int,
     val expireTime: LocalDateTime,
     val typeId: String,
+    val limit: Int
 )

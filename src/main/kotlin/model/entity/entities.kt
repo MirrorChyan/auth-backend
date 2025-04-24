@@ -9,6 +9,7 @@ object CDK : Table<Nothing>("mirrorc_cdk") {
 
     // 0 未使用 1 已使用 3 封禁 -1 忽略
     val status = int("status")
+    val limit = int("limit")
     val typeId = varchar("type_id")
     val expireTime = datetime("expire_time")
     val createdAt = datetime("created_at")
