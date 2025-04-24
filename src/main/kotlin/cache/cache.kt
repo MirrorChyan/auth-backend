@@ -5,8 +5,10 @@ import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.phantomthief.collection.BufferTrigger
 import config.RDS
 import datasource.DB
+import model.DownloadRecord
 import model.LogRecord
 import model.ValidTuple
+import model.entity.DownloadLog
 import model.entity.OperationLog
 import org.ktorm.dsl.batchInsert
 import org.slf4j.LoggerFactory
@@ -27,7 +29,7 @@ var BT: BufferTrigger<LogRecord> = run {
     BufferTrigger.batchBlocking<LogRecord>()
         .bufferSize(1000)
         .batchSize(500)
-        .linger(5, TimeUnit.SECONDS)
+        .linger(10, TimeUnit.SECONDS)
         .setConsumerEx {
             Thread.startVirtualThread {
                 val l = ArrayList(it)
@@ -40,6 +42,35 @@ var BT: BufferTrigger<LogRecord> = run {
                             set(OperationLog.ip, v.ip)
                             set(OperationLog.type, v.type)
                             set(OperationLog.createdAt, v.time)
+                        }
+                    }
+                }
+            }
+        }
+        .build().apply {
+            Runtime.getRuntime().addShutdownHook(Thread { manuallyDoTrigger() })
+        }
+}
+
+
+var DOWNLOAD_TRIGGER: BufferTrigger<DownloadRecord> = run {
+    BufferTrigger.batchBlocking<DownloadRecord>()
+        .bufferSize(1000)
+        .batchSize(500)
+        .linger(10, TimeUnit.SECONDS)
+        .setConsumerEx {
+            Thread.startVirtualThread {
+                val l = ArrayList(it)
+                DB.batchInsert(DownloadLog) {
+                    l.forEach { v ->
+                        item {
+                            set(DownloadLog.cdk, v.cdk)
+                            set(DownloadLog.resource, v.resource)
+                            set(DownloadLog.ua, v.ua)
+                            set(DownloadLog.ip, v.ip)
+                            set(DownloadLog.filesize, v.filesize)
+                            set(DownloadLog.version, v.version)
+                            set(DownloadLog.createdAt, v.time)
                         }
                     }
                 }

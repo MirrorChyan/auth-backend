@@ -93,6 +93,16 @@ private fun dispatch(router: Router) {
         }
     }
 
+    router.post("/validate/download").handler { ctx ->
+        requireJsonParams(ctx)?.let {
+            val p = JSON.parseObject(it, ValidateParams::class.java)
+            ctx.response().putHeader("Content-Type", "application/json")
+            Promise.promise<String>().execute(ctx) {
+                validateDownload(p).toJson()
+            }
+        }
+    }
+
 
     router.post("/create/cdk/type").handler { ctx ->
         requireJsonParams(ctx)?.let {

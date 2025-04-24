@@ -1,16 +1,13 @@
 package model.entity
 
-import org.ktorm.schema.Table
-import org.ktorm.schema.datetime
-import org.ktorm.schema.int
-import org.ktorm.schema.varchar
+import org.ktorm.schema.*
 
 object CDK : Table<Nothing>("mirrorc_cdk") {
     val key = varchar("key").primaryKey()
     val specificationId = varchar("specification_id")
     val type = varchar("type")
 
-    // 0 未使用 1 已使用
+    // 0 未使用 1 已使用 3 封禁 -1 忽略
     val status = int("status")
     val typeId = varchar("type_id")
     val expireTime = datetime("expire_time")
@@ -27,6 +24,18 @@ object OperationLog : Table<Nothing>("mirrorc_operation_log") {
     val type = varchar("type")
     val createdAt = datetime("created_at")
 }
+
+object DownloadLog : Table<Nothing>("mirrorc_download_log") {
+    val id = int("id").primaryKey()
+    val cdk = varchar("cdk")
+    val ip = varchar("ip")
+    val ua = varchar("ua")
+    val resource = varchar("resource")
+    val filesize = long("filesize")
+    val version = varchar("version")
+    val createdAt = datetime("created_at")
+}
+
 
 object CDKType : Table<Nothing>("mirrorc_cdk_type") {
     val typeId = varchar("type_id").primaryKey()

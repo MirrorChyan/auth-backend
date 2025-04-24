@@ -4,6 +4,7 @@ package biz
 import cache.BT
 import cache.C
 import cache.CT_CACHE
+import cache.DOWNLOAD_TRIGGER
 import com.alibaba.fastjson2.JSON
 import config.Props
 import config.RDS
@@ -102,6 +103,7 @@ fun acquireCDK(params: PlanParams): Resp {
 
 private const val VALIDATE = "validate"
 private const val tips = "Please confirm that you have entered the correct cdkey"
+private const val limitTips = "Your cdkey has reached the most downloads today"
 
 private val EMPTY = ValidTuple(-1, LocalDateTime.now(), "")
 
@@ -224,6 +226,29 @@ private fun checkCdkType(typeId: String?, resource: String?): Boolean {
     }
 
     return set.contains(resource)
+}
+
+
+fun validateDownload(info: ValidateParams): Resp {
+    val cdk = info.cdk ?: ""
+    if (cdk.isBlank() || cdk.length > 30 || cdk.length < 10) {
+        return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
+    }
+    if (doLimit(cdk)) {
+        DOWNLOAD_TRIGGER.enqueue(
+            DownloadRecord(
+                cdk = cdk,
+                resource = info.resource ?: "",
+                ua = info.ua ?: "",
+                ip = info.ip ?: "",
+                version = info.version ?: "",
+                filesize = info.filesize ?: 0L,
+                time = LocalDateTime.now()
+            )
+        )
+        return Resp.success()
+    }
+    return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
 }
 
 
