@@ -138,6 +138,10 @@ fun validateCDK(params: ValidateParams): Resp {
         return Resp.fail(tips, KEY_INVALID)
     }
 
+    if (record.status == 3) {
+        return Resp.fail(tips, KEY_BLOCKED)
+    }
+
     val expireTime = record.expireTime
     val status = record.status
 
