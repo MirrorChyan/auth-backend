@@ -60,6 +60,17 @@ class ValidateParams {
      * ip
      */
     var ip: String? = ""
+
+    /**
+     * version
+     */
+    var version: String? = null
+
+    /**
+     *
+     * filesize
+     */
+    var filesize: Long? = null
 }
 
 

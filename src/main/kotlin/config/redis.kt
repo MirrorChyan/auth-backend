@@ -3,7 +3,7 @@ package config
 import cache.evictAll
 import io.lettuce.core.RedisClient
 import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.api.async.RedisAsyncCommands
+import io.lettuce.core.api.sync.RedisCommands
 import io.lettuce.core.pubsub.RedisPubSubAdapter
 import org.slf4j.LoggerFactory
 
@@ -16,7 +16,7 @@ object RDS {
     }
     private val single = run {
         val connection: StatefulRedisConnection<String, String> = client.connect()
-        connection.async()
+        connection.sync()
     }
 
     private const val TOPIC = "auth"
@@ -36,7 +36,7 @@ object RDS {
         sub.async().subscribe(TOPIC)
     }
 
-    fun get(): RedisAsyncCommands<String, String> {
+    fun get(): RedisCommands<String?, String?> {
         return single
     }
 }
