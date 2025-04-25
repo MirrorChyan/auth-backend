@@ -19,6 +19,7 @@ import utils.throwIf
 import utils.throwIfNot
 import utils.throwIfNullOrEmpty
 import java.nio.ByteBuffer
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ThreadLocalRandom
@@ -244,8 +245,8 @@ fun validateDownload(info: ValidateParams): Resp {
     if (record.status == -1 || record.status == 3) {
         return Resp.fail(tips, KEY_INVALID)
     }
-    
-    val cnt = RDS.get().incr(KeyGenerator(cdk)).get() ?: 1
+
+    val cnt = RDS.get().incr(KeyGenerator(cdk)) ?: 1
     if (cnt - 1 < record.limit) {
         DOWNLOAD_TRIGGER.enqueue(
             DownloadRecord(
@@ -264,8 +265,9 @@ fun validateDownload(info: ValidateParams): Resp {
     return Resp.fail(limitTips, RESOURCE_QUOTA_EXHAUSTED)
 }
 
+private val DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 private val KeyGenerator: (String) -> String = {
-    val date = DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDateTime.now())
+    val date = LocalDate.now().format(DATE_FORMATTER)
     "limit:${date}:${it}"
 }
 
@@ -273,7 +275,7 @@ private fun doLimit(cdk: String, limit: Int): Boolean {
     if (!Props.Extra.limitEnabled) {
         return true
     }
-    val cnt = RDS.get().get(KeyGenerator(cdk)).get()?.toIntOrNull() ?: 0
+    val cnt = RDS.get().get(KeyGenerator(cdk))?.toIntOrNull() ?: 0
 
     return cnt < limit
 }

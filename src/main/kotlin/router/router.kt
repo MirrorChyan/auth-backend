@@ -145,15 +145,15 @@ private fun dispatch(router: Router) {
         }
     }
 
-    router.get("/metrics").handler { ctx ->
-        val scrape = registry.scrape()
-        ctx.response().apply {
-            putHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8; escaping=values")
-            putHeader("Content-Length", scrape.length.toString())
-            write(scrape)
-        }
-        ctx.end()
-    }
+//    router.get("/metrics").handler { ctx ->
+//        val scrape = registry.scrape()
+//        ctx.response().apply {
+//            putHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8; escaping=values")
+//            putHeader("Content-Length", scrape.length.toString())
+//            write(scrape)
+//        }
+//        ctx.end()
+//    }
 
     router.get("/health").handler { ctx ->
         ctx.response().setStatusCode(200).end()

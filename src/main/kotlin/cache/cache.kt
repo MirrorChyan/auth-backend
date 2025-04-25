@@ -18,7 +18,6 @@ private val log = LoggerFactory.getLogger("CacheKt")!!
 
 val C: Cache<String, ValidTuple> = Caffeine.newBuilder()
     .expireAfterWrite(7, TimeUnit.DAYS)
-    .softValues()
     .build()
 
 val CT_CACHE: Cache<String, Set<String>> = Caffeine.newBuilder()

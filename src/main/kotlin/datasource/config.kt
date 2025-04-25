@@ -21,7 +21,7 @@ fun config() {
         Database.connect(this)
     }
 
-    initMetrics()
+//    initMetrics()
     doSubscribeEvictEvent()
     StatHelper.poll()
 }
