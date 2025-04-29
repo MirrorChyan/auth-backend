@@ -19,6 +19,7 @@ import utils.throwIf
 import utils.throwIfNot
 import utils.throwIfNullOrEmpty
 import java.nio.ByteBuffer
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -246,7 +247,11 @@ fun validateDownload(info: ValidateParams): Resp {
         return Resp.fail(tips, KEY_INVALID)
     }
 
-    val cnt = RDS.get().incr(KeyGenerator(cdk)) ?: 1
+    val k = KeyGenerator(cdk)
+    val cnt = RDS.get().incr(k) ?: 1L
+    if (cnt == 1L) {
+        RDS.get().expire(k, Duration.ofDays(1))
+    }
     if (cnt - 1 < record.limit) {
         DOWNLOAD_TRIGGER.enqueue(
             DownloadRecord(
