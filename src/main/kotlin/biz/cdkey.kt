@@ -284,3 +284,8 @@ private fun doLimit(cdk: String, limit: Int): Boolean {
 
     return cnt < limit
 }
+
+fun recoverLimit(cdk: String): Resp {
+    val r = RDS.get().del(KeyGenerator(cdk))
+    return Resp.success(r)
+}
