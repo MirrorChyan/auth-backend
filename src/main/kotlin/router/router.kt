@@ -146,11 +146,13 @@ private fun dispatch(router: Router) {
 
     router.get("/recover").handler { ctx ->
         val cdk = ctx.queryParam("cdk")?.firstOrNull()
-        val resp = cdk?.let {
-            recoverLimit(it)
-        } ?: Resp.success()
-        ctx.response().putHeader("Content-Type", "application/json")
-        ctx.end(resp.toJson())
+        Thread.startVirtualThread {
+            val resp = cdk?.let {
+                recoverLimit(it)
+            } ?: Resp.success()
+            ctx.response().putHeader("Content-Type", "application/json")
+            ctx.end(resp.toJson())
+        }
     }
 
     router.get("/health").handler { ctx ->
