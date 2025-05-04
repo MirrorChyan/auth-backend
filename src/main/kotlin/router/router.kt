@@ -10,7 +10,6 @@ import io.vertx.ext.web.Router
 import io.vertx.ext.web.Router.router
 import io.vertx.ext.web.RoutingContext
 import io.vertx.ext.web.handler.BodyHandler
-import metrics.registry
 import model.*
 import org.slf4j.LoggerFactory
 import utils.execute
@@ -37,12 +36,12 @@ private fun errHandler(ctx: RoutingContext) {
     val resp = ctx.response()
     resp.putHeader("Content-Type", "application/json")
     if (ex is ServiceException) {
-        ctx.response().setStatusCode(ex.code)
+        ctx.response().statusCode = ex.code
         ctx.end(Resp.fail(ex.message).toJson())
         log.error("ServiceException {}", ex.message)
         return
     }
-    resp.setStatusCode(500)
+    resp.statusCode = 500
     log.error("unexpected error ", ex)
     ctx.end(UEE)
 }
@@ -50,7 +49,7 @@ private fun errHandler(ctx: RoutingContext) {
 private fun requireJsonParams(ctx: RoutingContext): String? {
     val body = ctx.body().asString()
     if (body == null || ctx.request().headers().get("content-type") != "application/json") {
-        ctx.response().setStatusCode(400)
+        ctx.response().statusCode = 400
         ctx.end(Resp.fail("parameter invalid").toJson())
     }
     return body
@@ -145,15 +144,16 @@ private fun dispatch(router: Router) {
         }
     }
 
-//    router.get("/metrics").handler { ctx ->
-//        val scrape = registry.scrape()
-//        ctx.response().apply {
-//            putHeader("Content-Type", "text/plain; version=0.0.4; charset=utf-8; escaping=values")
-//            putHeader("Content-Length", scrape.length.toString())
-//            write(scrape)
-//        }
-//        ctx.end()
-//    }
+    router.get("/recover").handler { ctx ->
+        val cdk = ctx.queryParam("cdk")?.firstOrNull()
+        Thread.startVirtualThread {
+            val resp = cdk?.let {
+                recoverLimit(it)
+            } ?: Resp.success()
+            ctx.response().putHeader("Content-Type", "application/json")
+            ctx.end(resp.toJson())
+        }
+    }
 
     router.get("/health").handler { ctx ->
         ctx.response().setStatusCode(200).end()
