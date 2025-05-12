@@ -22,6 +22,8 @@ import java.nio.ByteBuffer
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
@@ -131,6 +133,9 @@ private fun getCDKInfo(cdk: String) = run {
     }
 }
 
+
+private val E8 = OffsetDateTime.now().offset
+
 fun validateCDK(params: ValidateParams): Resp {
 
     val cdk = params.cdk
@@ -201,8 +206,7 @@ fun validateCDK(params: ValidateParams): Resp {
             time = LocalDateTime.now()
         )
     )
-
-    return Resp.success()
+    return Resp.success(expireTime.toInstant(E8).toEpochMilli() / 1000)
 }
 
 
