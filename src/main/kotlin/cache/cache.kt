@@ -24,7 +24,7 @@ val CT_CACHE: Cache<String, Set<String>> = Caffeine.newBuilder()
     .expireAfterWrite(7, TimeUnit.DAYS)
     .build()
 
-var BT: BufferTrigger<LogRecord> = run {
+val BT: BufferTrigger<LogRecord> = run {
     BufferTrigger.batchBlocking<LogRecord>()
         .bufferSize(1000)
         .batchSize(500)
@@ -52,7 +52,7 @@ var BT: BufferTrigger<LogRecord> = run {
 }
 
 
-var DOWNLOAD_TRIGGER: BufferTrigger<DownloadRecord> = run {
+val DOWNLOAD_TRIGGER: BufferTrigger<DownloadRecord> = run {
     BufferTrigger.batchBlocking<DownloadRecord>()
         .bufferSize(1000)
         .batchSize(500)

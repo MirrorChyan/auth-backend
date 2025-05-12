@@ -155,6 +155,18 @@ private fun dispatch(router: Router) {
         }
     }
 
+    router.get("/ban").handler { ctx ->
+        val cdk = ctx.queryParam("cdk")?.firstOrNull()
+        val recover = ctx.queryParam("recover")?.firstOrNull()  != null
+        Thread.startVirtualThread {
+            val resp = cdk?.let {
+                banCDKey(cdk, recover)
+            } ?: Resp.success()
+            ctx.response().putHeader("Content-Type", "application/json")
+            ctx.end(resp.toJson())
+        }
+    }
+
     router.get("/health").handler { ctx ->
         ctx.response().setStatusCode(200).end()
     }
