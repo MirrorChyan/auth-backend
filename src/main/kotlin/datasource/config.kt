@@ -4,7 +4,6 @@ import cache.doSubscribeEvictEvent
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import config.Props
-import metrics.initMetrics
 import org.ktorm.database.Database
 import stat.StatHelper
 
@@ -21,7 +20,6 @@ fun config() {
         Database.connect(this)
     }
 
-//    initMetrics()
     doSubscribeEvictEvent()
     StatHelper.poll()
 }

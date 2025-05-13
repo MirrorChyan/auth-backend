@@ -22,6 +22,8 @@ import java.nio.ByteBuffer
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
@@ -107,7 +109,7 @@ private const val VALIDATE = "validate"
 private const val tips = "Please confirm that you have entered the correct cdkey"
 private const val limitTips = "Your cdkey has reached the most downloads today"
 
-private val EMPTY = ValidTuple(-1, LocalDateTime.now(), "", -1)
+private val EMPTY = ValidTuple(CDK_PLACE_HODLER, LocalDateTime.now(), "", -1)
 
 
 private fun getCDKInfo(cdk: String) = run {
@@ -131,6 +133,9 @@ private fun getCDKInfo(cdk: String) = run {
     }
 }
 
+
+private val E8 = OffsetDateTime.now().offset
+
 fun validateCDK(params: ValidateParams): Resp {
 
     val cdk = params.cdk
@@ -141,11 +146,11 @@ fun validateCDK(params: ValidateParams): Resp {
     val record = C.get(cdk, ::getCDKInfo)
 
     // cache empty
-    if (record.status == -1) {
+    if (record.status == CDK_PLACE_HODLER) {
         return Resp.fail(tips, KEY_INVALID)
     }
 
-    if (record.status == 3) {
+    if (record.status == CDK_BANNED) {
         return Resp.fail(tips, KEY_BLOCKED)
     }
 
@@ -201,8 +206,7 @@ fun validateCDK(params: ValidateParams): Resp {
             time = LocalDateTime.now()
         )
     )
-
-    return Resp.success()
+    return Resp.success(expireTime.toInstant(E8).toEpochMilli() / 1000)
 }
 
 
@@ -243,7 +247,7 @@ fun validateDownload(info: ValidateParams): Resp {
     val record = C.get(cdk, ::getCDKInfo)
 
     // cache empty
-    if (record.status == -1 || record.status == 3) {
+    if (record.status == CDK_PLACE_HODLER || record.status == CDK_BANNED) {
         return Resp.fail(tips, KEY_INVALID)
     }
 
@@ -289,4 +293,26 @@ fun recoverLimit(cdk: String): Resp {
     val r = RDS.get().del(KeyGenerator(cdk))
     log.info("recover cdk limit {}", cdk)
     return Resp.success(r)
+}
+
+fun banCDKey(cdk: String, recover: Boolean): Resp {
+    val ret = DB.update(CDK) {
+        where {
+            CDK.key eq cdk
+        }
+        set(CDK.status, run {
+            if (recover) {
+                CDK_USED
+            } else {
+                CDK_BANNED
+            }
+        })
+    }
+    C.invalidate(cdk)
+    return Resp.success(
+        mapOf(
+            "ret" to ret,
+            "recover" to recover
+        )
+    )
 }
